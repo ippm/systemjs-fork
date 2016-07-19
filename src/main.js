@@ -1,0 +1,73 @@
+import Loader from './loader';
+import {
+	core,
+	meta,
+	alias,
+	amd,
+	bundles,
+	cjs,
+	plugins,
+	register,
+	package as _package,
+	scriptLoader,
+} from './modules';
+
+Promise.config({
+	longStackTraces: true,
+});
+
+function noop() {}
+
+export function makeHandlerChain(handlers, lastHandler) {
+	let handler = lastHandler || noop;
+	for (let i = handlers.length - 1; 0 <= i; i -= 1) {
+		handler = handlers[i](handler);
+	}
+	return handler;
+}
+
+export function makeLoaderClass(modules) {
+	const methodHanlders = Object.create(null);
+	for (let moduleI = 0; moduleI < modules.length; moduleI += 1) {
+		const module = modules[moduleI];
+		const keys = Object.keys(module);
+		for (let keyI = 0; keyI < keys.length; keyI += 1) {
+			const key = keys[keyI];
+			if (!(key in methodHanlders)) methodHanlders[key] = [];
+			methodHanlders[key].push(module[key]);
+		}
+	}
+	function LoaderClass() {
+		Loader.call(this);
+		this.paths = {};
+		this._loader.paths = {};
+		if ('constructor' in methodHanlders) makeHandlerChain(methodHanlders.constructor).call(this);
+	}
+	const proto = Object.create(Loader.prototype);
+	LoaderClass.prototype = proto;
+	proto.constructor = LoaderClass;
+	const keys = Object.keys(methodHanlders);
+	for (let keyI = 0; keyI < keys.length; keyI += 1) {
+		const key = keys[keyI];
+		if (key !== 'constructor') {
+			proto[key] = makeHandlerChain(
+				methodHanlders[key],
+				Loader.prototype[key]
+			);
+		}
+	}
+	return LoaderClass;
+}
+
+export const constructor = makeLoaderClass([
+	meta,
+	bundles,
+	plugins,
+	amd,
+	cjs,
+	alias,
+	register,
+	scriptLoader,
+	_package,
+	core,
+]);
