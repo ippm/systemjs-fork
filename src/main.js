@@ -27,31 +27,31 @@ export function makeHandlerChain(handlers, lastHandler) {
 }
 
 export function makeLoaderClass(modules) {
-	const methodHanlders = Object.create(null);
+	const methodHandlers = Object.create(null);
 	for (let moduleI = 0; moduleI < modules.length; moduleI += 1) {
 		const module = modules[moduleI];
 		const keys = Object.keys(module);
 		for (let keyI = 0; keyI < keys.length; keyI += 1) {
 			const key = keys[keyI];
-			if (!(key in methodHanlders)) methodHanlders[key] = [];
-			methodHanlders[key].push(module[key]);
+			if (!(key in methodHandlers)) methodHandlers[key] = [];
+			methodHandlers[key].push(module[key]);
 		}
 	}
 	function LoaderClass() {
 		Loader.call(this);
 		this.paths = {};
 		this._loader.paths = {};
-		if ('constructor' in methodHanlders) makeHandlerChain(methodHanlders.constructor).call(this);
+		if ('constructor' in methodHandlers) makeHandlerChain(methodHandlers.constructor).call(this);
 	}
 	const proto = Object.create(Loader.prototype);
 	LoaderClass.prototype = proto;
 	proto.constructor = LoaderClass;
-	const keys = Object.keys(methodHanlders);
+	const keys = Object.keys(methodHandlers);
 	for (let keyI = 0; keyI < keys.length; keyI += 1) {
 		const key = keys[keyI];
 		if (key !== 'constructor') {
 			proto[key] = makeHandlerChain(
-				methodHanlders[key],
+				methodHandlers[key],
 				Loader.prototype[key]
 			);
 		}
