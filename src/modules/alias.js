@@ -30,7 +30,7 @@ function fetch(next) {
 				}],
 				execute() {},
 			});
-			return '';
+			return Promise.resolve('');
 		}
 
 		return next.call(this, load);

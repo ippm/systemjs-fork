@@ -95,25 +95,28 @@ function register() {
 		if (typeof name !== 'string') {
 			declare = deps;
 			deps = name;
-			name = null;
+			name = undefined;
 		}
 
 		// dynamic backwards-compatibility
 		// can be deprecated eventually
 		if (typeof declare === 'boolean') return this.registerDynamic.apply(this, arguments);
 
-		const entry = createEntry();
-		// ideally wouldn't apply map config to bundle names but
-		// dependencies go through map regardless so we can't restrict
-		// could reconsider in shift to new spec
-		entry.name = name && (this.decanonicalize || this.normalize).call(this, name);
-		entry.declarative = true;
-		entry.deps = deps;
-		entry.declare = declare;
 
-		this.pushRegister_({
-			amd: false,
-			entry,
+		return (name ? this.normalize(name) : Promise.resolve(undefined)).then(normName => {
+			const entry = createEntry();
+			// ideally wouldn't apply map config to bundle names but
+			// dependencies go through map regardless so we can't restrict
+			// could reconsider in shift to new spec
+			entry.name = normName;
+			entry.declarative = true;
+			entry.deps = deps;
+			entry.declare = declare;
+
+			return this.pushRegister_({
+				amd: false,
+				entry,
+			});
 		});
 	};
 }
@@ -124,19 +127,20 @@ function registerDynamic() {
 			execute = declare;
 			declare = deps;
 			deps = name;
-			name = null;
+			name = undefined;
 		}
 
-		// dynamic
-		const entry = createEntry();
-		entry.name = name && (this.decanonicalize || this.normalize).call(this, name);
-		entry.deps = deps;
-		entry.execute = execute;
-		entry.executingRequire = declare;
+		return (name ? this.normalize(name) : Promise.resolve(undefined)).then(normName => {
+			const entry = createEntry();
+			entry.name = normName;
+			entry.deps = deps;
+			entry.execute = execute;
+			entry.executingRequire = declare;
 
-		this.pushRegister_({
-			amd: false,
-			entry,
+			return this.pushRegister_({
+				amd: false,
+				entry,
+			});
 		});
 	};
 }

@@ -12,10 +12,6 @@ import {
 	scriptLoader,
 } from './modules';
 
-Promise.config({
-	longStackTraces: true,
-});
-
 function noop() {}
 
 export function makeHandlerChain(handlers, lastHandler) {
@@ -26,7 +22,7 @@ export function makeHandlerChain(handlers, lastHandler) {
 	return handler;
 }
 
-export function makeLoaderClass(modules) {
+export function makeLoaderClassWoWrapping(modules) {
 	const methodHandlers = Object.create(null);
 	for (let moduleI = 0; moduleI < modules.length; moduleI += 1) {
 		const module = modules[moduleI];
@@ -44,7 +40,7 @@ export function makeLoaderClass(modules) {
 		Loader.call(this);
 		this.paths = {};
 		this._loader.paths = {};
-		if (constructorChain) this::constructorChain();
+		if (constructorChain) constructorChain.call(this);
 	}
 	const proto = Object.create(Loader.prototype);
 	LoaderClass.prototype = proto;
@@ -52,14 +48,36 @@ export function makeLoaderClass(modules) {
 	const keys = Object.keys(methodHandlers);
 	for (let keyI = 0; keyI < keys.length; keyI += 1) {
 		const key = keys[keyI];
-		if (key !== 'constructor') {
-			proto[key] = makeHandlerChain(
-				methodHandlers[key],
-				Loader.prototype[key]
-			);
-		}
+		if (key !== 'constructor') proto[key] = makeHandlerChain(methodHandlers[key], proto[key]);
 	}
 	return LoaderClass;
+}
+
+const SYNC_METHODS = ['config', 'register', 'registerDynamic'];
+
+function wrapMethod(key) {
+	const isSync = SYNC_METHODS.indexOf(key) !== -1;
+	if (isSync) {
+		return function $syncWrapper(...args) {
+			this._syncMethodPromise = this._syncMethodPromise.then(() => this._loader[key](...args));
+		};
+	}
+	return function $asyncWrapper(...args) {
+		return this._syncMethodPromise.then(() => this._loader[key](...args));
+	};
+}
+
+export function makeLoaderClass(modules) {
+	const LoaderClass = makeLoaderClassWoWrapping(modules);
+	function WrapperClass() {
+		this._loader = new LoaderClass();
+		this._syncMethodPromise = Promise.resolve();
+	}
+	const lProto = LoaderClass.prototype;
+	const wProto = WrapperClass.prototype;
+	// eslint-disable-next-line guard-for-in
+	for (const key in lProto) wProto[key] = wrapMethod(key);
+	return WrapperClass;
 }
 
 export const constructor = makeLoaderClass([
