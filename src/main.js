@@ -37,11 +37,14 @@ export function makeLoaderClass(modules) {
 			methodHandlers[key].push(module[key]);
 		}
 	}
+	const constructorChain = do {
+		if ('constructor' in methodHandlers) makeHandlerChain(methodHandlers.constructor);
+	};
 	function LoaderClass() {
 		Loader.call(this);
 		this.paths = {};
 		this._loader.paths = {};
-		if ('constructor' in methodHandlers) makeHandlerChain(methodHandlers.constructor).call(this);
+		if (constructorChain) this::constructorChain();
 	}
 	const proto = Object.create(Loader.prototype);
 	LoaderClass.prototype = proto;

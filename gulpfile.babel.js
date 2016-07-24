@@ -29,6 +29,7 @@ gulp.task('build', () =>
 					'transform-promise-to-bluebird',
 					'transform-async-to-bluebird',
 					'transform-function-bind',
+					'transform-do-expressions',
 					'transform-runtime',
 				],
 				runtimeHelpers: true,

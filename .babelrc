@@ -3,6 +3,7 @@
 	"plugins": [
 		"transform-promise-to-bluebird",
 		"transform-async-to-bluebird",
-		"transform-function-bind"
+		"transform-function-bind",
+		"transform-do-expressions"
 	]
 }
