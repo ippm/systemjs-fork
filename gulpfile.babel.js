@@ -15,6 +15,29 @@ const $ = lazyReq(require, {
 	exec: ['child_process', 'exec', Promise.promisify],
 });
 
+gulp.task('build-es2015', () =>
+	$.rollupStream({
+		entry: './src/main.js',
+		format: 'es',
+		sourceMap: true,
+		plugins: [
+			$.rollupBabel({
+				babelrc: false,
+				plugins: [
+					'transform-promise-to-bluebird',
+					'transform-async-to-bluebird',
+					'transform-function-bind',
+					'transform-do-expressions',
+				],
+			}),
+		],
+	})
+		.pipe($.vinylSourceBuffer('systemjs.es2015.js'))
+		.pipe($.sourcemaps.init({loadMaps: true}))
+		.pipe($.sourcemaps.write('./'))
+		.pipe(gulp.dest('./build'))
+);
+
 gulp.task('build', () =>
 	$.rollupStream({
 		entry: './src/main.js',

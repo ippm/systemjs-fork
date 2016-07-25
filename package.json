@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "",
   "main": "build/systemjs.js",
+  "jsnext:main": "build/systemjs.es2015.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ippm/systemjs-fork.git"
